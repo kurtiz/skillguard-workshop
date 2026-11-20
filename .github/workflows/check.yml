@@ -1,0 +1,42 @@
+name: Workshop installers
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  install-and-scan:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: POSIX installer contracts
+        if: runner.os != 'Windows'
+        run: python3 -m unittest discover -s tests -v
+      - name: Install on macOS or Linux
+        if: runner.os != 'Windows'
+        run: sh scripts/install.sh
+      - name: Scan fixtures on macOS or Linux
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./.tools/skillguard scan ./demo/clean/SKILL.md --quiet
+          set +e
+          ./.tools/skillguard scan ./demo/injected/SKILL.md --quiet
+          result=$?
+          set -e
+          test "$result" -eq 1
+          ./.tools/skillguard scan ./demo/hidden/SKILL.md --quiet
+      - name: Install on Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: .\scripts\install.ps1
+      - name: Windows checksum and scan checks
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: .\tests\windows.ps1

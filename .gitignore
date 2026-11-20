@@ -1,0 +1,8 @@
+.DS_Store
+.tools/
+practice/
+reports/
+__pycache__/
+*.pyc
+# Local presenter archive; deliberately excluded from the participant repository.
+youth-in-ai-2026/
